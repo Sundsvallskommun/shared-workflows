@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   review-dependabot-pr:
+    name: Dependabot reviewer
     runs-on: ubuntu-latest
     if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     steps:

@@ -18,10 +18,11 @@ Automatically approves and merges dependabot pull requests that have passed all 
 
 If a pull request is opened by anyone else but Dependabot the reviewer will skip trying to auto-merge the PR.
 
-```
+````
 name: "Call Dependabot reviewer"
 
-on: pull_request_target
+on:
+  pull_request_target:
 
 permissions:
   pull-requests: write
@@ -30,7 +31,7 @@ permissions:
 jobs:
   shared-workflows:
     uses: Sundsvallskommun/shared-workflows/.github/workflows/common-dependabot-reviewer.yml@main
-```
+    secrets: inherit```
 
 ## Java specific workflows
 
@@ -40,23 +41,22 @@ The following workflows are only compatible to be run in repositories containing
 
 Just as you should do before you push your code this workflow runs `mvn -B verify`. Useful to make sure code actually compiles and test passes. Important to use as a required check if you want to implement the dependabot autoreviewer.
 
-```
+````
+
 name: "Call Java CI with Maven"
 
 on:
-  workflow_dispatch:
-  pull_request:
-    types: [ opened, synchronize, reopened ]
-  push:
-    branches:
-      - main
-  schedule:
-    # At 03:00 on Sunday (Please note: GitHub actions schedule is in UTC time).
-    - cron: '0 3 * * 0'
+workflow_dispatch:
+pull_request:
+types: [ opened, synchronize, reopened ]
+push:
+branches: - main
+schedule: # At 03:00 on Sunday (Please note: GitHub actions schedule is in UTC time). - cron: '0 3 \* \* 0'
 
 jobs:
-  shared-workflows:
-    uses: Sundsvallskommun/shared-workflows/.github/workflows/java-maven-ci.yml@main
+shared-workflows:
+uses: Sundsvallskommun/shared-workflows/.github/workflows/java-maven-ci.yml@main
+
 ```
 
 ##
@@ -66,23 +66,23 @@ jobs:
 Used to scan the code in the repository for find potential vulnerabilities.
 
 ```
+
 name: "Call CodeQL"
 
 on:
-  workflow_dispatch:
-  pull_request:
-    types: [ opened, synchronize, reopened ]
-  push:
-    branches:
-      - main
+workflow_dispatch:
+pull_request:
+types: [ opened, synchronize, reopened ]
+push:
+branches: - main
 
 jobs:
-  shared-workflows:
-    uses: Sundsvallskommun/shared-workflows/.github/workflows/java-codeql.yml@main
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
+shared-workflows:
+uses: Sundsvallskommun/shared-workflows/.github/workflows/java-codeql.yml@main
+permissions:
+actions: read
+contents: read
+security-events: write
 
 ```
 
@@ -93,3 +93,4 @@ Contributions are welcome! See the [Contributor's Guide](CONTRIBUTING.md).
 ##
 
 Copyright (c) 2024 Sundsvalls kommun
+```

@@ -18,7 +18,7 @@ Automatically approves and merges dependabot pull requests that have passed all 
 
 If a pull request is opened by anyone else but Dependabot the reviewer will skip trying to auto-merge the PR.
 
-````
+```
 name: "Call Dependabot reviewer"
 
 on:
@@ -31,7 +31,8 @@ permissions:
 jobs:
   shared-workflows:
     uses: Sundsvallskommun/shared-workflows/.github/workflows/common-dependabot-reviewer.yml@main
-    secrets: inherit```
+    secrets: inherit
+```
 
 ## Java specific workflows
 
@@ -41,7 +42,7 @@ The following workflows are only compatible to be run in repositories containing
 
 Just as you should do before you push your code this workflow runs `mvn -B verify`. Useful to make sure code actually compiles and test passes. Important to use as a required check if you want to implement the dependabot autoreviewer.
 
-````
+```
 
 name: "Call Java CI with Maven"
 
@@ -93,4 +94,3 @@ Contributions are welcome! See the [Contributor's Guide](CONTRIBUTING.md).
 ##
 
 Copyright (c) 2024 Sundsvalls kommun
-```

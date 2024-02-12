@@ -2,6 +2,9 @@ name: "Dependabot reviewer"
 
 on:
   workflow_call:
+    secrets:
+      review-token:
+        required: true
 
 permissions:
   pull-requests: write
@@ -20,9 +23,9 @@ jobs:
         run: gh pr merge --auto --merge "$PR_URL"
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
-          GITHUB_TOKEN: ${{secrets.UTVECKLINGSFABRIKEN_DEPENDABOT_AUTOREVIEW_TOKEN}}
+          GITHUB_TOKEN: ${{ secrets.review-token }}
       - name: Approve pull request
         run: gh pr review $PR_URL --approve -b "Seems legit. Approving!"
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
-          GITHUB_TOKEN: ${{secrets.UTVECKLINGSFABRIKEN_DEPENDABOT_AUTOREVIEW_TOKEN}}i
+          GITHUB_TOKEN: ${{ secrets.review-token }}

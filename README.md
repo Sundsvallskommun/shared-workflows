@@ -47,16 +47,19 @@ Just as you should do before you push your code this workflow runs `mvn -B verif
 name: "Call Java CI with Maven"
 
 on:
-workflow_dispatch:
-pull_request:
-types: [ opened, synchronize, reopened ]
-push:
-branches: - main
-schedule: # At 03:00 on Sunday (Please note: GitHub actions schedule is in UTC time). - cron: '0 3 \* \* 0'
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+  schedule:
+    # At 03:00 on Sunday (Please note: GitHub actions schedule is in UTC time).
+    - cron: "0 3 * * 0"
 
 jobs:
-shared-workflows:
-uses: Sundsvallskommun/shared-workflows/.github/workflows/java-maven-ci.yml@main
+  shared-workflows:
+    uses: Sundsvallskommun/shared-workflows/.github/workflows/java-maven-ci.yml@main
 
 ```
 
@@ -67,26 +70,44 @@ uses: Sundsvallskommun/shared-workflows/.github/workflows/java-maven-ci.yml@main
 Used to scan the code in the repository for find potential vulnerabilities.
 
 ```
-
 name: "Call CodeQL"
 
 on:
-workflow_dispatch:
-pull_request:
-types: [ opened, synchronize, reopened ]
-push:
-branches: - main
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
 
 jobs:
-shared-workflows:
-uses: Sundsvallskommun/shared-workflows/.github/workflows/java-codeql.yml@main
-permissions:
-actions: read
-contents: read
-security-events: write
+  shared-workflows:
+    uses: Sundsvallskommun/shared-workflows/.github/workflows/java-codeql.yml@main
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
 
 ```
 
+##
+
+### Maven Release
+
+Used to release a new version of the project. This workflow will create a new tag and push it to the repository.
+
+```
+name: "Call Maven Release"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  shared-workflows:
+        uses: Sundsvallskommun/shared-workflows/.github/workflows/java-maven-publish.yml@main
+    	secrets: inherit
+          
+```
 ## Contributions
 
 Contributions are welcome! See the [Contributor's Guide](CONTRIBUTING.md).

@@ -1,0 +1,120 @@
+name: "Publish package to the Maven Central Repository"
+
+on:
+  workflow_call:
+    secrets:
+      JAVA_VERSION:
+        required: true
+      GPG_PASSPHRASE:
+        required: true
+      MAVEN_USERNAME:
+        required: true
+      MAVEN_PASSWORD:
+        required: true
+      OSSRH_USERNAME:
+        required: true
+      OSSRH_PASSWORD:
+        required: true
+      USER_EMAIL:
+        required: true
+      USER_NAME:
+        required: true
+
+jobs:
+  publish:
+    env:
+      GITHUB_TOKEN: ${{ secrets.UTVECKLINGSFABRIKEN_TOKEN }}
+      MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.UTVECKLINGSFABRIKEN_TOKEN }}
+          fetch-depth: 0
+
+      - name: Get from tag
+        id: from_tag
+        run:
+          echo "FROM_TAG=$(git tag --sort=-creatordate | head -1)" >> $GITHUB_OUTPUT
+
+      - name: Create release branch-name
+        id: branch_name
+        run:
+          echo "BRANCH_NAME=release-$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | awk -F- '{print $1}')" >> $GITHUB_OUTPUT
+
+      - name: Create release branch
+        run:
+          git checkout -b ${{ steps.branch_name.outputs.BRANCH_NAME }}
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      - name: Set up Maven Central Repository
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ secrets.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+          server-id: ossrh
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+
+      - name: Configure Git user
+        run: |
+          git config --global user.email ${{ secrets.USER_EMAIL }}
+          git config --global user.name ${{ secrets.USER_NAME }}
+
+      - name: Prepare release with Maven
+        env:
+          MAVEN_USERNAME: ${{ secrets.USER_NAME }}
+          MAVEN_PASSWORD: ${GITHUB_TOKEN}
+        run: mvn -B release:prepare
+
+      - name: Perform release with Maven
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+        run: mvn -B release:perform -Darguments="-DskipTests"
+
+      - name: Get latest tag
+        id: latest_tag
+        run:
+          echo "TO_TAG=$(git tag --sort=-creatordate | head -1)" >> $GITHUB_OUTPUT
+
+      - name: Create pull request
+        run:
+          gh pr create -B main -H ${{ steps.branch_name.outputs.BRANCH_NAME }} --title 'PR for release  ${{ steps.branch_name.outputs.BRANCH_NAME }}' --body 'PR for creating release  ${{ steps.branch_name.outputs.BRANCH_NAME }}'
+
+      - name: Build Changelog
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@v3.7.0
+        with:
+          fromTag: ${{ steps.from_tag.outputs.FROM_TAG }}
+          toTag: ${{ steps.latest_tag.outputs.TO_TAG }}
+          configurationJson: |
+            {
+              "template": "## What's changed ## \n #{{UNCATEGORIZED}}\n\n"
+            }
+
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1.1.4
+        with:
+          tag_name: ${{ steps.latest_tag.outputs.TO_TAG }}
+          release_name: ${{ steps.latest_tag.outputs.TO_TAG }}
+          body: |
+            ${{ steps.build_changelog.outputs.changelog }}
+            ##
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ env.FROM_TAG }}...${{ env.TO_TAG }}
+          draft: false
+          prerelease: false
